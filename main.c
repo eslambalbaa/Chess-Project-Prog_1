@@ -16,13 +16,14 @@ void eatenpieces(int eatenpiece);
 int iswhite(char piece);
 int isblack(char piece);
 int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int startcol);
+int endgame(char board[8][8]);
 
 
 int main(){
    char board[8][8];
    initposition(board);
    printBoard(board);
-   while(1){
+   while(!endgame(board)){
    movement(board);}
 
     return 0;
@@ -157,6 +158,7 @@ int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int st
      return 1;
 }
 
+
 int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
     if (c1< 'A' || c1>'H' || c2< 'A' || c2>'H') {return 0;}
     if (r1< 1 || r1>8 || r2<1 || r2>8) {return 0;}
@@ -164,9 +166,14 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
+    int whoseturn;
     char piece = board[startrow][startcol];
     int rowdiff = destrow - startrow;
     int coldiff = destcol - startcol;
+    if(turn(movesplayed)==0){whoseturn = 0;}
+    else if(turn(movesplayed)==1){whoseturn =1;}
+    if(iswhite(piece) && turn(movesplayed)==1){return 0;}
+    else if(isblack(piece) && turn(movesplayed)==0){return 0;}
     if(startrow == destrow && startcol == destcol){return 0;}
     if(iswhite(piece) && iswhite(board[destrow][destcol])){return 0;}
     if(isblack(piece) && isblack(board[destrow][destcol])){return 0;}
@@ -214,6 +221,32 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
     }
 }
 
+
 void eatenpieces(int eatenpiece){
     printf("Eaten piece: %c\n", eatenpiece);
+}
+
+
+int endgame(char board[8][8]){
+    int checkK1 = 0;
+    int checkK2 = 0;
+     for (int i = 0; i < 8; i++){
+        for (int j = 0; j < 8; j++){
+            if (board[i][j] == 'K'){
+                checkK2 = 1;
+            }
+            else if (board[i][j] == 'k'){
+                checkK1 = 1;
+            }
+        }
+    }
+    if(checkK1 == 1 && checkK2 == 1){
+        return 0;}
+    else if(checkK1 == 1 && checkK2 == 0){
+        printf("White won!");
+    }
+    else if(checkK2 == 1 && checkK1 == 0){
+        printf("Black won!");
+    }
+    return 1;
 }
