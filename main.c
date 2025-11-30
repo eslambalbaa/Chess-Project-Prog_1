@@ -102,12 +102,12 @@ void printBoard(char board[8][8]){
             printf("%c ", board[i][j]);}
         if(i == 0){
             printf("%d", 8-i); 
-            printf("\t\tWhite eaten:"); 
+            printf("\t\tWhite taken out:"); 
             for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%c", whiteeaten[r]);} else{printf("%c, ", whiteeaten[r]);}}
             printf("\n");}
         else if(i == 1){
             printf("%d", 8-i); 
-            printf("\t\tBlack eaten:");  
+            printf("\t\tBlack taken out:");  
             for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%c", blackeaten[s]);} else{printf("%c, ", blackeaten[s]);}}
             printf("\n");}
         else{printf("%d\n", 8-i);}
