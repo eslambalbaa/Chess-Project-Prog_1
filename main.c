@@ -4,6 +4,9 @@
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
   int movesplayed = 0;
+  char whiteeaten[16], blackeaten[16];
+  int whiteeatencount = 0, blackeatencount = 0;
+  char eatenpiece;
 
 void printBoard(char board[8][8]);
 void initposition(char board[8][8]);
@@ -79,8 +82,8 @@ void movement(char board[8][8]){
     else{
         board[startrow][startcol] = '-';
     }
-    printBoard(board);
     if(eatenpiece != '-' && eatenpiece != '.'){eatenpieces(eatenpiece);}
+    printBoard(board);
     movesplayed++;
     if(checkmate(board, c1, r1, c2, r2)){
         printf("Chckmate!\n");
@@ -97,7 +100,17 @@ void printBoard(char board[8][8]){
         printf("%d ", 8-i);
         for (int j=0;j<8;j++){
             printf("%c ", board[i][j]);}
-        printf("%d\n", 8-i);
+        if(i == 0){
+            printf("%d", 8-i); 
+            printf("\t\tWhite eaten:"); 
+            for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%c", whiteeaten[r]);} else{printf("%c, ", whiteeaten[r]);}}
+            printf("\n");}
+        else if(i == 1){
+            printf("%d", 8-i); 
+            printf("\t\tBlack eaten:");  
+            for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%c", blackeaten[s]);} else{printf("%c, ", blackeaten[s]);}}
+            printf("\n");}
+        else{printf("%d\n", 8-i);}
     }
     printf("  A B C D E F G H\n");
 }
@@ -223,7 +236,14 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
 
 
 void eatenpieces(int eatenpiece){
-    printf("Eaten piece: %c\n", eatenpiece);
+    if(iswhite(eatenpiece)){
+        whiteeaten[whiteeatencount] = eatenpiece;
+        whiteeatencount++;
+    }
+    else if(isblack(eatenpiece)){
+       blackeaten[blackeatencount] = eatenpiece;
+        blackeatencount++;
+    }
 }
 
 
