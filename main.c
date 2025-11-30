@@ -7,12 +7,15 @@
   char whiteeaten[16], blackeaten[16];
   int whiteeatencount = 0, blackeatencount = 0;
   char eatenpiece;
+  int whitewin = 0, blackwin = 0;
+
 
 void printBoard(char board[8][8]);
 void initposition(char board[8][8]);
 void movement(char board[8][8]);
-int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2);
-int checkmate(char board[8][8], char c1, int r1, char c2, int r2);
+int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip);
+int check(char board[8][8], int movesplayed);
+int checkmate(char board[8][8]);
 int turn(int movesplayed);
 int isempty(char place);
 void eatenpieces(int eatenpiece);
@@ -20,6 +23,7 @@ int iswhite(char piece);
 int isblack(char piece);
 int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int startcol);
 int endgame(char board[8][8]);
+
 
 
 int main(){
@@ -60,6 +64,7 @@ int isempty(char place){
 
 
 void movement(char board[8][8]){
+    if(check(board, movesplayed)){printf("Check!\n");}
     char c1, c2;
     int r1, r2;
       if(turn(movesplayed)==0){
@@ -69,13 +74,19 @@ void movement(char board[8][8]){
         printf("Black's move:");
     }
     scanf(" %c%d%c%d", &c1, &r1, &c2, &r2);
-    if(isvalidmove(board, c1, r1, c2, r2)){
+    if(isvalidmove(board, c1, r1, c2, r2, 0)){
     int destcol = c2 - 'A';
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
     int eatenpiece = board[destrow][destcol];
     board[destrow][destcol] = board[startrow][startcol];
+    if(check(board, movesplayed)){
+        printf("Illegal move it puts your king in check\n");
+        board[startrow][startcol] = board[destrow][destcol];
+        board[destrow][destcol] = eatenpiece;
+        return;
+    }
     if((startcol+startrow)%2){
         board[startrow][startcol] = '.';
     }
@@ -85,9 +96,7 @@ void movement(char board[8][8]){
     if(eatenpiece != '-' && eatenpiece != '.'){eatenpieces(eatenpiece);}
     printBoard(board);
     movesplayed++;
-    if(checkmate(board, c1, r1, c2, r2)){
-        printf("Chckmate!\n");
-    } }
+    }
     else{
         printf("Move is invalid, please enter another move\n");
     }
@@ -133,11 +142,6 @@ void initposition(char board[8][8]){
          }
 
 
-int checkmate(char board[8][8], char c1, int r1, char c2, int r2){
-        return 0;
-}
-
-
 int turn(int movesplayed){
     if(movesplayed%2==0){
         return 0;
@@ -172,7 +176,7 @@ int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int st
 }
 
 
-int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
+int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
     if (c1< 'A' || c1>'H' || c2< 'A' || c2>'H') {return 0;}
     if (r1< 1 || r1>8 || r2<1 || r2>8) {return 0;}
     int destcol = c2 - 'A';
@@ -183,10 +187,10 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2){
     char piece = board[startrow][startcol];
     int rowdiff = destrow - startrow;
     int coldiff = destcol - startcol;
-    if(turn(movesplayed)==0){whoseturn = 0;}
-    else if(turn(movesplayed)==1){whoseturn =1;}
-    if(iswhite(piece) && turn(movesplayed)==1){return 0;}
-    else if(isblack(piece) && turn(movesplayed)==0){return 0;}
+    if(skip == 0 && turn(movesplayed)==0){whoseturn = 0;}
+    else if(skip == 0 && turn(movesplayed)==1){whoseturn =1;}
+    if( skip == 0 && iswhite(piece) && turn(movesplayed)==1){return 0;}
+    else if(skip == 0 && isblack(piece) && turn(movesplayed)==0){return 0;}
     if(startrow == destrow && startcol == destcol){return 0;}
     if(iswhite(piece) && iswhite(board[destrow][destcol])){return 0;}
     if(isblack(piece) && isblack(board[destrow][destcol])){return 0;}
@@ -247,26 +251,82 @@ void eatenpieces(int eatenpiece){
 }
 
 
-int endgame(char board[8][8]){
-    int checkK1 = 0;
-    int checkK2 = 0;
-     for (int i = 0; i < 8; i++){
-        for (int j = 0; j < 8; j++){
-            if (board[i][j] == 'K'){
-                checkK2 = 1;
-            }
-            else if (board[i][j] == 'k'){
-                checkK1 = 1;
-            }
+int check(char board[8][8], int movesplayed){
+  int Krow, Kcol;
+  char undercheck, King;
+  if(turn(movesplayed)==0){
+       King = 'k';}
+  else if(turn(movesplayed)==1){
+       King = 'K';
+  }
+  for(int i = 0; i < 8; i++){
+    for(int j = 0; j < 8; j++){
+        if(board[i][j] == King){
+            Krow = i;
+            Kcol = j;}}
+        }
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+            undercheck = board[i][j];
+            if(isempty(undercheck)){continue;}
+
+        if(iswhite(undercheck) && turn(movesplayed) == 1){
+            if(isvalidmove(board, j+'A', 8-i, Kcol+'A', 8-Krow, 1)){return 1;}
+        }
+        else if(isblack(undercheck) && turn(movesplayed) == 0){
+            if(isvalidmove(board, j+'A', 8-i, Kcol+'A', 8-Krow, 1)){return 1;}
+        }
+    }}
+    return 0;    
+        }
+
+
+int checkmate(char board[8][8]){
+    char temp;
+    if(!check(board, movesplayed)){return 0;}
+    for(int i =0 ; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+        if(iswhite(board[i][j]) && turn(movesplayed) == 1){continue;}
+        else if(isblack(board[i][j]) && turn(movesplayed) == 0){continue;}
+        else if(isempty(board[i][j])){continue;}
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+                if(isvalidmove(board, j+'A', 8-i, c+'A', 8-r, 1)){
+             temp = board[r][c];
+            board[r][c] = board[i][j];
+            if((i+j)%2){
+        board[i][j] = '.';
+    }
+    else{
+        board[i][j] = '-';
+    }
+    if(!check(board, movesplayed)){
+        board[i][j] = board[r][c];
+        board[r][c] = temp;
+        return 0;}
+        board[i][j] = board[r][c];
+        board[r][c] = temp;
+    }
+    
+    }
+}
         }
     }
-    if(checkK1 == 1 && checkK2 == 1){
-        return 0;}
-    else if(checkK1 == 1 && checkK2 == 0){
-        printf("White won!");
-    }
-    else if(checkK2 == 1 && checkK1 == 0){
-        printf("Black won!");
-    }
+ if(turn(movesplayed) == 1){whitewin = 1;}
+ else if(turn(movesplayed) == 0){blackwin = 1;}  
     return 1;
 }
+
+
+int endgame(char board[8][8]){
+    if(checkmate(board)){
+        if(whitewin == 1){
+            printf("White won! Checkmate");
+            return 1;}
+        else if(blackwin == 1){
+            printf("Black won! Checkmate");
+            return 1;}
+        }
+        return 0;
+}
+
