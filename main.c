@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <windows.h>
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
   int movesplayed = 0;
@@ -28,11 +29,13 @@ int endgame(char board[8][8]);
 int stalemate(char board[8][8]);
 int ispromotion(char board[8][8], char c1, int r1, char c2, int r2);
 int ispromotionvalid(char board[8][8],char promotionpiece , int  startrow, int startcol);
+char* piecechangeforprint(char piece);
 
 
 
 
 int main(){
+    SetConsoleOutputCP(65001);
    char board[8][8];
    initposition(board);
    printBoard(board);
@@ -124,24 +127,25 @@ void movement(char board[8][8]){
 
 
 void printBoard(char board[8][8]){
-    printf("  A B C D E F G H\n");
+    printf("    A   B   C   D   E   F   G   H\n");
+    printf("  +---+---+---+---+---+---+---+---+\n");
     for (int i=0;i<8;i++){
-        printf("%d ", 8-i);
+        printf("%d |", 8-i);
         for (int j=0;j<8;j++){
-            printf("%c ", board[i][j]);}
+            printf(" %s |", piecechangeforprint(board[i][j]));}
         if(i == 0){
-            printf("%d", 8-i); 
+            printf(" %d ", 8-i); 
             printf("\t\tWhite taken out:"); 
             for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%c", whiteeaten[r]);} else{printf("%c, ", whiteeaten[r]);}}
-            printf("\n");}
+            printf("\n  +---+---+---+---+---+---+---+---+\n");}
         else if(i == 1){
-            printf("%d", 8-i); 
+            printf(" %d", 8-i); 
             printf("\t\tBlack taken out:");  
             for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%c", blackeaten[s]);} else{printf("%c, ", blackeaten[s]);}}
-            printf("\n");}
-        else{printf("%d\n", 8-i);}
+            printf("\n  +---+---+---+---+---+---+---+---+\n");}
+        else{printf(" %d\n  +---+---+---+---+---+---+---+---+\n", 8-i);}
     }
-    printf("  A B C D E F G H\n");
+    printf("    A   B   C   D   E   F   G   H\n");
 }
 
 
@@ -406,4 +410,39 @@ int endgame(char board[8][8]){
         printf("Stalemate!");
         return 1;}
         return 0;
+}
+
+
+char* piecechangeforprint(char piece){
+   switch(piece){
+   case 'p': return "♙";
+     break;
+   case 'P': return "♟";
+     break;
+   case 'r': return "♖";
+     break;
+   case 'R': return "♜";
+     break;
+   case 'n': return "♘";
+     break;
+   case 'N': return "♞";
+     break;
+   case 'b': return "♗";
+     break;
+   case 'B': return "♝";
+     break;
+   case 'q': return "♕";
+     break;
+   case 'Q': return "♛";
+     break;
+   case 'k': return "♔";
+     break;
+   case 'K': return "♚";
+     break;
+   case '.': return ".";
+    break;
+   case '-': return "-";
+    break;
+   default: break;
+   } 
 }
