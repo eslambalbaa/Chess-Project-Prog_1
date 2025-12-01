@@ -27,7 +27,7 @@ int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int st
 int endgame(char board[8][8]);
 int stalemate(char board[8][8]);
 int ispromotion(char board[8][8], char c1, int r1, char c2, int r2);
-int ispromotionvalid(char board[8][8],char promotionpiece , char  startrow, char startcol);
+int ispromotionvalid(char board[8][8],char promotionpiece , int  startrow, int startcol);
 
 
 
@@ -88,19 +88,22 @@ void movement(char board[8][8]){
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
     int eatenpiece = board[destrow][destcol];
+    char startpiece = board[startrow][startcol];
     board[destrow][destcol] = board[startrow][startcol];
     if(ispromotion(board, c1, r1, c2, r2)){
-         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
+        while(1){ 
+        printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
          scanf(" %c", &promotionpiece);
          if(turn(movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
          else if(turn(movesplayed) == 1){promotionpiece = toupper(promotionpiece);}
          if(!ispromotionvalid(board, promotionpiece, startrow, startcol)){
         printf("Promotion invalid please enter another one\n");}
-        else{board[destrow][destcol] = promotionpiece;}
-    }
+        else{board[destrow][destcol] = promotionpiece;
+        break;}  
+    }}
     if(check(board, movesplayed)){
         printf("Illegal move it puts your king in check\n");
-        board[startrow][startcol] = board[destrow][destcol];
+        board[startrow][startcol] = startpiece;
         board[destrow][destcol] = eatenpiece;
         return;
     }
@@ -310,7 +313,7 @@ int ispromotion(char board[8][8], char c1, int r1, char c2, int r2){
 }
 
 
-int ispromotionvalid(char board[8][8], char promotionpiece,char  startrow, char startcol){
+int ispromotionvalid(char board[8][8], char promotionpiece,int  startrow, int startcol){
      if(board[startrow][startcol] == 'p'){
         if ( promotionpiece == 'b' || promotionpiece == 'n' || promotionpiece == 'q' || promotionpiece == 'r'){return 1;}}
      else if(board[startrow][startcol] == 'P'){
