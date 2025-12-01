@@ -2,7 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
   int movesplayed = 0;
@@ -35,7 +37,9 @@ char* piecechangeforprint(char piece);
 
 
 int main(){
+    #ifdef _WIN32
     SetConsoleOutputCP(65001);
+    #endif
    char board[8][8];
    initposition(board);
    printBoard(board);
