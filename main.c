@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
   int movesplayed = 0;
@@ -8,6 +9,7 @@
   int whiteeatencount = 0, blackeatencount = 0;
   char eatenpiece;
   int whitewin = 0, blackwin = 0;
+  char promotionpiece;
 
 
 void printBoard(char board[8][8]);
@@ -23,6 +25,10 @@ int iswhite(char piece);
 int isblack(char piece);
 int ispathclear(char board[8][8], int destrow, int destcol, int startrow, int startcol);
 int endgame(char board[8][8]);
+int stalemate(char board[8][8]);
+int ispromotion(char board[8][8], char c1, int r1, char c2, int r2);
+int ispromotionvalid(char board[8][8],char promotionpiece , char  startrow, char startcol);
+
 
 
 
@@ -74,6 +80,8 @@ void movement(char board[8][8]){
         printf("Black's move:");
     }
     scanf(" %c%d%c%d", &c1, &r1, &c2, &r2);
+    c1 = toupper(c1);
+    c2 = toupper(c2);
     if(isvalidmove(board, c1, r1, c2, r2, 0)){
     int destcol = c2 - 'A';
     int destrow = 8 - r2;
@@ -81,6 +89,15 @@ void movement(char board[8][8]){
     int startrow = 8 - r1;
     int eatenpiece = board[destrow][destcol];
     board[destrow][destcol] = board[startrow][startcol];
+    if(ispromotion(board, c1, r1, c2, r2)){
+         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
+         scanf(" %c", &promotionpiece);
+         if(turn(movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
+         else if(turn(movesplayed) == 1){promotionpiece = toupper(promotionpiece);}
+         if(!ispromotionvalid(board, promotionpiece, startrow, startcol)){
+        printf("Promotion invalid please enter another one\n");}
+        else{board[destrow][destcol] = promotionpiece;}
+    }
     if(check(board, movesplayed)){
         printf("Illegal move it puts your king in check\n");
         board[startrow][startcol] = board[destrow][destcol];
@@ -281,6 +298,28 @@ int check(char board[8][8], int movesplayed){
         }
 
 
+int ispromotion(char board[8][8], char c1, int r1, char c2, int r2){
+    int destcol = c2 - 'A';
+    int destrow = 8 - r2;
+    int startcol = c1 - 'A';
+    int startrow = 8 - r1;
+    char piece = board[startrow][startcol];
+    if(piece == 'p' && iswhite(piece) && destrow == 0){return 1;}
+    else if(piece == 'P' && isblack(piece) && destrow == 7){return 1;}
+    return 0;
+}
+
+
+int ispromotionvalid(char board[8][8], char promotionpiece,char  startrow, char startcol){
+     if(board[startrow][startcol] == 'p'){
+        if ( promotionpiece == 'b' || promotionpiece == 'n' || promotionpiece == 'q' || promotionpiece == 'r'){return 1;}}
+     else if(board[startrow][startcol] == 'P'){
+         if ( promotionpiece == 'B' || promotionpiece == 'N' || promotionpiece == 'Q' || promotionpiece == 'R'){return 1;}
+     }
+ return 0;
+}
+
+
 int checkmate(char board[8][8]){
     char temp;
     if(!check(board, movesplayed)){return 0;}
@@ -318,6 +357,39 @@ int checkmate(char board[8][8]){
 }
 
 
+int stalemate(char board[8][8]){
+    char temp;
+    if(check(board, movesplayed)){return 0;}
+    for(int i =0 ; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+      if(iswhite(board[i][j]) && turn(movesplayed) == 1){continue;}
+        else if(isblack(board[i][j]) && turn(movesplayed) == 0){continue;}
+        else if(isempty(board[i][j])){continue;}
+        for (int r = 0; r < 8; r++){
+            for (int c = 0; c < 8; c++){
+     if(isvalidmove(board, j+'A', 8-i, c+'A', 8-r, 1)){
+             temp = board[r][c];
+             board[r][c] = board[i][j];
+             if((i+j)%2){
+             board[i][j] = '.';
+    }
+    else{
+             board[i][j] = '-';
+    }
+    if(!check(board, movesplayed)){
+        board[i][j] = board[r][c];
+        board[r][c] = temp;
+        return 0;}
+        board[i][j] = board[r][c];
+        board[r][c] = temp;
+    }
+}   
+}
+        }
+    }
+    return 1;
+}
+
 int endgame(char board[8][8]){
     if(checkmate(board)){
         if(whitewin == 1){
@@ -327,6 +399,8 @@ int endgame(char board[8][8]){
             printf("Black won! Checkmate");
             return 1;}
         }
+    else if(stalemate(board)){
+        printf("Stalemate!");
+        return 1;}
         return 0;
 }
-
