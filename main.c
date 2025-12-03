@@ -34,6 +34,7 @@ int ispromotion(char board[8][8], char c1, int r1, char c2, int r2);
 int ispromotionvalid(char board[8][8],char promotionpiece , int  startrow, int startcol);
 char* piecechangeforprint(char piece);
 void sidenote();
+void clearinputbuffer();
 void cleaninput(char* input);
 
 
@@ -90,7 +91,9 @@ void movement(char board[8][8]){
         printf("Black's move:");
     }
     fgets(inputmove, 80, stdin);
+    if (strchr(inputmove, '\n') == NULL){clearinputbuffer();}
     cleaninput(inputmove);
+    if(strlen(inputmove) != 4){printf("Move is invalid, please enter another move\n"); return;}
     c1 = inputmove[0];
     c2 = inputmove[2];
     r1 = inputmove[1] - '0';
@@ -108,6 +111,7 @@ void movement(char board[8][8]){
         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
          char inputprom[10];
          fgets(inputprom, 10, stdin);
+         if (strchr(inputprom, '\n') == NULL){clearinputbuffer();}
          cleaninput(inputprom);
          promotionpiece = inputprom[0];
          if(turn(movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
@@ -136,6 +140,12 @@ void movement(char board[8][8]){
     else{
         printf("Move is invalid, please enter another move\n");
     }
+}
+
+
+void clearinputbuffer(){
+    int c;
+    while(( c = getchar()) != '\n' && c != EOF){}
 }
 
 
