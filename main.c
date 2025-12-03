@@ -5,10 +5,11 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include <time.h>
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
   int movesplayed = 0;
-  char whiteeaten[16], blackeaten[16];
+  char whiteeaten[16], blackeaten[16], inputmove[100];
   int whiteeatencount = 0, blackeatencount = 0;
   char eatenpiece;
   int whitewin = 0, blackwin = 0;
@@ -32,6 +33,8 @@ int stalemate(char board[8][8]);
 int ispromotion(char board[8][8], char c1, int r1, char c2, int r2);
 int ispromotionvalid(char board[8][8],char promotionpiece , int  startrow, int startcol);
 char* piecechangeforprint(char piece);
+void sidenote();
+void cleaninput(char* input);
 
 
 
@@ -86,9 +89,12 @@ void movement(char board[8][8]){
     else{
         printf("Black's move:");
     }
-    scanf(" %c%d%c%d", &c1, &r1, &c2, &r2);
-    c1 = toupper(c1);
-    c2 = toupper(c2);
+    fgets(inputmove, 80, stdin);
+    cleaninput(inputmove);
+    c1 = inputmove[0];
+    c2 = inputmove[2];
+    r1 = inputmove[1] - '0';
+    r2 = inputmove[3] - '0';    
     if(isvalidmove(board, c1, r1, c2, r2, 0)){
     int destcol = c2 - 'A';
     int destrow = 8 - r2;
@@ -98,16 +104,19 @@ void movement(char board[8][8]){
     char startpiece = board[startrow][startcol];
     board[destrow][destcol] = board[startrow][startcol];
     if(ispromotion(board, c1, r1, c2, r2)){
-        while(1){ 
+        while(1){
         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
-         scanf(" %c", &promotionpiece);
+         char inputprom[10];
+         fgets(inputprom, 10, stdin);
+         cleaninput(inputprom);
+         promotionpiece = inputprom[0];
          if(turn(movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
          else if(turn(movesplayed) == 1){promotionpiece = toupper(promotionpiece);}
          if(!ispromotionvalid(board, promotionpiece, startrow, startcol)){
         printf("Promotion invalid please enter another one\n");}
         else{board[destrow][destcol] = promotionpiece;
         break;}  
-    }}
+}}
     if(check(board, movesplayed)){
         printf("Illegal move it puts your king in check\n");
         board[startrow][startcol] = startpiece;
@@ -130,6 +139,17 @@ void movement(char board[8][8]){
 }
 
 
+void cleaninput(char* input){
+    int j = 0;
+    for(int i = 0; input[i] != '\0' ; i++){
+     if(input[i] != ' ' && input[i] != '\n'){
+   input[j] = toupper(input[i]);
+   j++;}
+}
+input[j] = '\0';
+}
+
+
 void printBoard(char board[8][8]){
     printf("    A   B   C   D   E   F   G   H\n");
     printf("  +---+---+---+---+---+---+---+---+\n");
@@ -137,16 +157,20 @@ void printBoard(char board[8][8]){
         printf("%d |", 8-i);
         for (int j=0;j<8;j++){
             printf(" %s |", piecechangeforprint(board[i][j]));}
-        if(i == 0){
+        if(i == 1){
             printf(" %d ", 8-i); 
             printf("\t\tWhite taken out:"); 
-            for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%c", whiteeaten[r]);} else{printf("%c, ", whiteeaten[r]);}}
+            for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%s", piecechangeforprint(whiteeaten[r]));} else{printf("%s, ", piecechangeforprint(whiteeaten[r]));}}
             printf("\n  +---+---+---+---+---+---+---+---+\n");}
-        else if(i == 1){
+        else if(i == 2){
             printf(" %d", 8-i); 
             printf("\t\tBlack taken out:");  
-            for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%c", blackeaten[s]);} else{printf("%c, ", blackeaten[s]);}}
+            for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%s", piecechangeforprint(blackeaten[s]));} else{printf("%s, ", piecechangeforprint(blackeaten[s]));}}
             printf("\n  +---+---+---+---+---+---+---+---+\n");}
+        else if(i == 0){printf(" %d", 8-i);
+            printf("\t\t"); sidenote();
+            printf("\n  +---+---+---+---+---+---+---+---+\n");}
+            
         else{printf(" %d\n  +---+---+---+---+---+---+---+---+\n", 8-i);}
     }
     printf("    A   B   C   D   E   F   G   H\n");
@@ -449,4 +473,32 @@ char* piecechangeforprint(char piece){
     break;
    default: break;
    } 
+}
+
+
+void sidenote(){
+   srand(time(NULL));
+  int qoute = rand()%6;
+  switch(qoute){
+    case 0:
+    printf("2 is forever lonely in the prime world!");
+    break;
+    case 1:
+    printf("Chebyshev said it, And I say it again, There's always a prime Between n and 2n.");
+    break;
+    case 2:
+    printf("If you fell down yesterday, stand up today.");
+    break;
+    case 3:
+    printf("The man who moves a mountain begins by carrying away small stones.");
+    break;
+    case 4:
+    printf("I'm not the smartest fellow in the world, but I can sure pick smart colleagues.");
+    break;
+    case 5:
+    printf("Just keep taking chances and having fun.");
+    break;
+    default:
+    break;
+  }
 }
