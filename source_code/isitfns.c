@@ -73,7 +73,7 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
     char piece = board[startrow][startcol];
     int rowdiff = destrow - startrow;
     int coldiff = destcol - startcol;
-    if(skip == 0 && turn(movesplayed)==0){whoseturn = 0;}
+    if(skip == 0 && turn(current.movesplayed   )==0){whoseturn = 0;}
     else if(skip == 0 && turn(movesplayed)==1){whoseturn =1;}
     if( skip == 0 && iswhite(piece) && turn(movesplayed)==1){return 0;}
     else if(skip == 0 && isblack(piece) && turn(movesplayed)==0){return 0;}

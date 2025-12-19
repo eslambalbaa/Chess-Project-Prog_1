@@ -24,9 +24,20 @@ void movement(char board[8][8]){
     else{
         printf("Black's move:");
     }
+
     fgets(inputmove, 80, stdin);
     if (strchr(inputmove, '\n') == NULL){clearinputbuffer();}
     cleaninput(inputmove);
+    if(strcmp(inputmove, "UNDO") == 0){
+        undo();
+        printBoard(current.board);
+    }
+    if(strcmp(inputmove, "SAVE") == 0)Save();
+    if(strcmp(inputmove, "LOAD") == 0){
+        Load();
+        printBoard(current.board);
+    }
+        history[current.movesplayed] = current;
     if(strlen(inputmove) != 4){printf("Move is invalid, please enter another move\n"); return;}
     c1 = inputmove[0];
     c2 = inputmove[2];
@@ -70,6 +81,7 @@ void movement(char board[8][8]){
     if(eatenpiece != '-' && eatenpiece != '.'){eatenpieces(eatenpiece);}
     printBoard(board);
     movesplayed++;
+    current
     }
     else{
         printf("Move is invalid, please enter another move\n");
@@ -101,4 +113,35 @@ int turn(int movesplayed){
     else if(movesplayed%2==1){
         return 1;
     }
+}
+
+
+void undo(){
+    if(current.movesplayed>0){
+        current=history[current.movesplayed-1];
+        printf("undone successfully");
+    }
+    else{
+        printf("nothing to undo");
+    }
+}
+void Save(){
+    FILE *save= fopen("save.txt", "wb");
+    if(save==NULL)
+        printf("save failed");
+        else{
+            fwrite(&current, sizeof(game), 1, save);
+            fclose(save);
+            printf("saved successfully");
+        }
+}
+void Load(){
+    FILE *load= fopen("save.txt", "rb");
+    if(load==NULL)
+        printf("load failed");
+        else{
+            fread(&current, sizeof(game), 1, load);
+            fclose(load);
+            printf("loaded successfully");
+        }
 }
