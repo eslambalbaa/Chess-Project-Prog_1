@@ -14,7 +14,7 @@
 #include "sidenotes.h"
 
 int check(char board[8][8], int movesplayed){
-  int Krow, Kcol;
+  int Krow = -1, Kcol = -1;
   char undercheck, King;
   if(turn(movesplayed)==0){
        King = 'k';}

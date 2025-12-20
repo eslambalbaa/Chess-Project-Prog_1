@@ -69,12 +69,9 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
-    int whoseturn;
     char piece = board[startrow][startcol];
     int rowdiff = destrow - startrow;
     int coldiff = destcol - startcol;
-    if(skip == 0 && turn(current.movesplayed   )==0){whoseturn = 0;}
-    else if(skip == 0 && turn(current.movesplayed)==1){whoseturn =1;}
     if( skip == 0 && iswhite(piece) && turn(current.movesplayed)==1){return 0;}
     else if(skip == 0 && isblack(piece) && turn(current.movesplayed)==0){return 0;}
     if(startrow == destrow && startcol == destcol){return 0;}
@@ -128,7 +125,6 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
 
 
 int ispromotion(char board[8][8], char c1, int r1, char c2, int r2){
-    int destcol = c2 - 'A';
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;

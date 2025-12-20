@@ -19,6 +19,7 @@ int main(){
     #endif
    srand(time(NULL));
    initposition(current.board);
+   current.enpassCol = -1;
    history[0] = current;
    printBoard(current.board);
    while(!endgame(current.board)){

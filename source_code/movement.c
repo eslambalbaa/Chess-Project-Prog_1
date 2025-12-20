@@ -72,19 +72,18 @@ void movement(char board[8][8]){
     int startrow = 8 - r1;
     int eatenpiece = board[destrow][destcol];
     char startpiece = board[startrow][startcol];
-    int is_ep = 0;
-    int ep_row = -1;
+    int isenpass = 0;
+    int enpassR = -1;
     if((startpiece == 'p' || startpiece == 'P') && startcol != destcol && isempty(eatenpiece)){
-        is_ep = 1;
-        ep_row = startrow; 
-        eatenpiece = board[ep_row][destcol];
+        isenpass = 1;
+        enpassR = startrow; 
+        eatenpiece = board[enpassR][destcol];
         }
         history[current.movesplayed] = current;
         board[destrow][destcol] = startpiece;
-        if(is_ep){
-            board[ep_row][destcol] = (ep_row + destcol) % 2 ? '.' : '-';
+        if(isenpass){
+            board[enpassR][destcol] = (enpassR + destcol) % 2 ? '.' : '-';
         }
-    board[destrow][destcol] = board[startrow][startcol];
     if(ispromotion(board, c1, r1, c2, r2)){
         while(1){
         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
@@ -103,19 +102,20 @@ void movement(char board[8][8]){
     if(check(board, current.movesplayed)){
         printf("Illegal move it puts your king in check\n");
             board[startrow][startcol] = startpiece;
-            board[destrow][destcol] = eatenpiece;
+            if(isenpass){
+                board[destrow][destcol] = (destrow + destcol) % 2 ? '.' : '-';
+                board[enpassR][destcol] = eatenpiece;
+            }
+            else{
+                board[destrow][destcol] = eatenpiece;
+            }
         return;
     }
-    if((startcol+startrow)%2){
-        board[startrow][startcol] = '.';
-    }
-    else{
-        board[startrow][startcol] = '-';
-    }
+    board[startrow][startcol] = (startcol+startrow)%2 ? '.' : '-';
     if(eatenpiece != '-' && eatenpiece != '.'){eatenpieces(eatenpiece);}
     current.enpassCol = -1;
-        if(startpiece == 'p' && (destrow - startrow) == -2) { current.enpassCol = startcol; }
-        if(startpiece == 'P' && (destrow - startrow) == 2) { current.enpassCol = startcol; }
+    if(startpiece == 'p' && (destrow - startrow) == -2) { current.enpassCol = startcol; }
+    if(startpiece == 'P' && (destrow - startrow) == 2) { current.enpassCol = startcol; }
     current.movesplayed++;
     undoCount = 0;
     history[current.movesplayed] = current;
@@ -137,7 +137,7 @@ void clearinputbuffer(){
 void cleaninput(char* input){
     int j = 0;
     for(int i = 0; input[i] != '\0' ; i++){
-     if(input[i] != ' ' && input[i] != '\n'){
+     if(input[i] != ' ' && input[i] != '\n' && input[i] != '\r'){
    input[j] = toupper(input[i]);
    j++;}
 }
@@ -149,9 +149,7 @@ int turn(int movesplayed){
     if(movesplayed%2==0){
         return 0;
     }
-    else if(movesplayed%2==1){
         return 1;
-    }
 }
 
 
@@ -161,10 +159,10 @@ void undo(){
         printf("undone successfully\n\n");
     }
 }
-void redo(){
-    current=history[current.movesplayed+1];
-    printf("redone successfully\n\n");
-}
+    void redo(){
+        current=history[current.movesplayed+1];
+        printf("redone successfully\n\n");
+    }
 
 void Save(){
     FILE *save= fopen("save.txt", "wb");
@@ -186,5 +184,3 @@ void Load(){
             printf("loaded successfully\n\n");
         }
 }
-
-

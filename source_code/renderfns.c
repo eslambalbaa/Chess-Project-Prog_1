@@ -104,4 +104,5 @@ char* piecechangeforprint(char piece){
     break;
    default: break;
    } 
+   return "";
 }
