@@ -84,6 +84,28 @@ void movement(char board[8][8]){
         if(isenpass){
             board[enpassR][destcol] = (enpassR + destcol) % 2 ? '.' : '-';
         }
+    if((startpiece == 'k' || startpiece == 'K') && abs(startcol-destcol) == 2){
+        int rokstartcol = (destcol==6) ? 7 : 0;
+        int rokdestcol = (destcol==6) ? 5 : 3;
+        board[startrow][rokdestcol] = board[startrow][rokstartcol];
+        board[startrow][rokstartcol] = (startrow+rokdestcol)%2 ? '.' : '-';
+        if(startpiece =='k'){current.Wkingmoved = 1;}
+        if(startpiece == 'K'){current.Bkingmoved = 1;}
+        if(rokstartcol== 7 && startrow == 7 ){current.WrookmovedH = 1;}
+        if(rokstartcol== 7 && startrow == 0 ){current.BrookmovedH = 1;}
+        if(rokstartcol== 0 && startrow == 7 ){current.WrookmovedA = 1;}
+        if(rokstartcol== 0 && startrow == 0 ){current.BrookmovedA = 1;}
+    }
+    if (startpiece == 'r') {
+    if (startrow == 7 && startcol == 0) current.WrookmovedA = 1;
+    if (startrow == 7 && startcol == 7) current.WrookmovedH = 1; 
+    }
+    if (startpiece == 'R') {
+    if (startrow == 0 && startcol == 0) current.BrookmovedA = 1;
+    if (startrow == 0 && startcol == 7) current.BrookmovedH = 1;
+    if (startpiece == 'K') current.Bkingmoved = 1;
+    if (startpiece == 'k') current.Wkingmoved = 1;
+    }
     if(ispromotion(board, c1, r1, c2, r2)){
         while(1){
         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");

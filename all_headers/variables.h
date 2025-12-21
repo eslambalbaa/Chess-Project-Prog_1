@@ -14,12 +14,12 @@
     int whitewin;
     int blackwin;
     int enpassCol;
-    Wkingmoved;
-    WrookmovedA;
-    WrookmovedH;
-    Bkingmoved;
-    BrookmovedA;
-    BrookmovedH;
+    int Wkingmoved;
+    int WrookmovedA;
+    int WrookmovedH;
+    int Bkingmoved;
+    int BrookmovedA;
+    int BrookmovedH;
   } game;
   extern game history[1000];
   extern game current;

@@ -17,13 +17,19 @@ int main(){
     #ifdef _WIN32
     SetConsoleOutputCP(65001);
     #endif
-   srand(time(NULL));
-   initposition(current.board);
-   current.enpassCol = -1;
-   history[0] = current;
-   printBoard(current.board);
-   while(!endgame(current.board)){
-   movement(current.board);}
+    srand(time(NULL));
+    initposition(current.board);
+    current.Wkingmoved=0;
+    current.WrookmovedA=0;
+    current.WrookmovedH=0;
+    current.Bkingmoved=0;
+    current.BrookmovedA=0;
+    current.BrookmovedH=0;
+    current.enpassCol = -1;
+    history[0] = current;
+    printBoard(current.board);
+    while(!endgame(current.board)){
+    movement(current.board);}
 
     return 0;
 }

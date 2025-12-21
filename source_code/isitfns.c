@@ -115,8 +115,55 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
      if((rowdiff == 0 || coldiff == 0 || abs(rowdiff) == abs(coldiff)) && ispathclear(board, destrow, destcol, startrow, startcol)){return 1;}
      return 0;
      case 'k':
+     if((abs(rowdiff) <= 1) && (abs(coldiff) <= 1)){return 1;}
+     if(startrow == 7 && rowdiff == 0 &&!current.Wkingmoved && skip==0){
+        if(destcol == 6 && ispathclear(board, 7, 7, 7, 4)&& !current.WrookmovedH) {
+            if(check(board,0))return 0;
+        board[7][5] = 'k';
+        board[7][4] = (7+4)%2 ? '.' : '-';
+        int f1check = check(board, 0);
+        board[7][4] = 'k';
+        board[7][5] = (7+5)%2 ? '.' : '-';
+        if (f1check) return 0;
+        return 1;
+
+        }
+        if(destcol == 2 && ispathclear(board, 7, 0, 7, 4) && !current.WrookmovedA) {
+            if(check(board,0))return 0;
+        board[7][3] = 'k';
+        board[7][4] = (7+4)%2 ? '.' : '-';
+        int d1check = check(board, 0);
+        board[7][4] = 'k';
+        board[7][3] = (7+5)%2 ? '.' : '-';
+        if (d1check) return 0;
+        return 1;
+        }
+     } 
+     return 0;
      case 'K':
      if((abs(rowdiff) <= 1) && (abs(coldiff) <= 1)){return 1;}
+     if(startrow == 0 && rowdiff == 0 &&!current.Bkingmoved && skip==0){
+        if(destcol == 6 && ispathclear(board, 0, 7, 0, 4)&& !current.BrookmovedH) {
+            if(check(board,1))return 0;
+            board[0][5] = 'K';
+            board[0][4] = (0+4)%2 ? '.' : '-';
+            int f8check = check(board, 1);
+            board[0][4] = 'K';
+            board[0][5] = (0+5)%2 ? '.' : '-';
+            if (f8check) return 0;
+            return 1;
+        }
+        if(destcol == 2 && ispathclear(board, 0, 0, 0, 4) && !current.BrookmovedA) {
+            if(check(board,1))return 0;
+            board[0][3] = 'K';
+            board[0][4] = (0+4)%2 ? '.' : '-';
+            int d8check = check(board, 1);
+            board[0][4] = 'K';
+            board[0][3] = (0+5)%2 ? '.' : '-';
+            if (d8check) return 0;
+            return 1;
+        }
+     } 
      return 0;
      default:
          return 0;
