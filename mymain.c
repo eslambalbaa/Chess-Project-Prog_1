@@ -6,14 +6,33 @@
 #include <windows.h>
 #endif
 #include <time.h>
+typedef struct{
+    char board[8][8];
+    int movesplayed;
+    int whiteeatencount;
+    int blackeatencount;
+    char whiteeaten[16];
+    char blackeaten[16];
+    int whitewin;
+    int blackwin;
+    int enpassCol;
+    int Wkingmoved;
+    int WrookmovedA;
+    int WrookmovedH;
+    int Bkingmoved;
+    int BrookmovedA;
+    int BrookmovedH;
+  } game;
   char  Wpawn = 'p', Wrook = 'r', Wknight = 'n', Wbishop = 'b', Wqueen = 'q', Wking = 'k';
   char  Bpawn = 'P', Brook = 'R', Bknight = 'N', Bbishop = 'B', Bqueen = 'Q', Bking = 'K';
-  int movesplayed = 0;
-  char whiteeaten[16], blackeaten[16], inputmove[100];
-  int whiteeatencount = 0, blackeatencount = 0;
+  char inputmove[100];
   char eatenpiece;
-  int whitewin = 0, blackwin = 0;
   char promotionpiece;
+  int undoCount=0;
+  game history[1000];
+  game current;
+  
+
 
 
 void printBoard(char board[8][8]);
@@ -36,20 +55,28 @@ char* piecechangeforprint(char piece);
 void sidenote();
 void clearinputbuffer();
 void cleaninput(char* input);
-
+void undo();
+void redo();
 
 
 
 int main(){
-    #ifdef _WIN32
+   #ifdef _WIN32
     SetConsoleOutputCP(65001);
     #endif
-   srand(time(NULL));
-   char board[8][8];
-   initposition(board);
-   printBoard(board);
-   while(!endgame(board)){
-   movement(board);}
+    srand(time(NULL));
+    initposition(current.board);
+    current.Wkingmoved=0;
+    current.WrookmovedA=0;
+    current.WrookmovedH=0;
+    current.Bkingmoved=0;
+    current.BrookmovedA=0;
+    current.BrookmovedH=0;
+    current.enpassCol = -1;
+    history[0] = current;
+    printBoard(current.board);
+    while(!endgame(current.board)){
+    movement(current.board);}
 
     return 0;
 }
@@ -82,18 +109,51 @@ int isempty(char place){
 
 
 void movement(char board[8][8]){
-    if(check(board, movesplayed)){printf("Check!\n");}
+    if(check(board, current.movesplayed)){printf("Check!\n");}
     char c1, c2;
     int r1, r2;
-      if(turn(movesplayed)==0){
+      if(turn(current.movesplayed)==0){
        printf("White's move:");
     }
     else{
         printf("Black's move:");
     }
+
     fgets(inputmove, 80, stdin);
     if (strchr(inputmove, '\n') == NULL){clearinputbuffer();}
     cleaninput(inputmove);
+
+    if(strcmp(inputmove, "UNDO") == 0){
+        if(current.movesplayed > 0){
+        undo();
+        printBoard(current.board);
+        undoCount++;
+        }
+        else{
+            printf("nothing to undo\n\n");
+        }
+        return;
+    }
+
+    if(strcmp(inputmove, "REDO") == 0){
+        if(undoCount > 0){
+            redo();
+            printBoard(current.board);
+            undoCount--;
+        } else {
+            printf("nothing to redo\n\n");
+        }
+        return;
+    }
+    if(strcmp(inputmove, "SAVE") == 0){
+        Save(); 
+        return;
+    }
+    if(strcmp(inputmove, "LOAD") == 0){
+        Load();
+        printBoard(current.board);
+        return;
+    }
     if(strlen(inputmove) != 4){printf("Move is invalid, please enter another move\n"); return;}
     c1 = inputmove[0];
     c2 = inputmove[2];
@@ -106,7 +166,40 @@ void movement(char board[8][8]){
     int startrow = 8 - r1;
     int eatenpiece = board[destrow][destcol];
     char startpiece = board[startrow][startcol];
-    board[destrow][destcol] = board[startrow][startcol];
+    int isenpass = 0;
+    int enpassR = -1;
+    if((startpiece == 'p' || startpiece == 'P') && startcol != destcol && isempty(eatenpiece)){
+        isenpass = 1;
+        enpassR = startrow; 
+        eatenpiece = board[enpassR][destcol];
+        }
+        history[current.movesplayed] = current;
+        board[destrow][destcol] = startpiece;
+        if(isenpass){
+            board[enpassR][destcol] = (enpassR + destcol) % 2 ? '.' : '-';
+        }
+    if((startpiece == 'k' || startpiece == 'K') && abs(startcol-destcol) == 2){
+        int rokstartcol = (destcol==6) ? 7 : 0;
+        int rokdestcol = (destcol==6) ? 5 : 3;
+        board[startrow][rokdestcol] = board[startrow][rokstartcol];
+        board[startrow][rokstartcol] = (startrow+rokdestcol)%2 ? '.' : '-';
+        if(startpiece =='k'){current.Wkingmoved = 1;}
+        if(startpiece == 'K'){current.Bkingmoved = 1;}
+        if(rokstartcol== 7 && startrow == 7 ){current.WrookmovedH = 1;}
+        if(rokstartcol== 7 && startrow == 0 ){current.BrookmovedH = 1;}
+        if(rokstartcol== 0 && startrow == 7 ){current.WrookmovedA = 1;}
+        if(rokstartcol== 0 && startrow == 0 ){current.BrookmovedA = 1;}
+    }
+    if (startpiece == 'r') {
+    if (startrow == 7 && startcol == 0) current.WrookmovedA = 1;
+    if (startrow == 7 && startcol == 7) current.WrookmovedH = 1; 
+    }
+    if (startpiece == 'R') {
+    if (startrow == 0 && startcol == 0) current.BrookmovedA = 1;
+    if (startrow == 0 && startcol == 7) current.BrookmovedH = 1;
+    if (startpiece == 'K') current.Bkingmoved = 1;
+    if (startpiece == 'k') current.Wkingmoved = 1;
+    }
     if(ispromotion(board, c1, r1, c2, r2)){
         while(1){
         printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
@@ -115,28 +208,28 @@ void movement(char board[8][8]){
          if (strchr(inputprom, '\n') == NULL){clearinputbuffer();}
          cleaninput(inputprom);
          promotionpiece = inputprom[0];
-         if(turn(movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
-         else if(turn(movesplayed) == 1){promotionpiece = toupper(promotionpiece);}
+         if(turn(current.movesplayed) == 0){promotionpiece = tolower(promotionpiece);}
+         else if(turn(current.movesplayed) == 1){promotionpiece = toupper(promotionpiece);}
          if(!ispromotionvalid(board, promotionpiece, startrow, startcol)){
         printf("Promotion invalid please enter another one\n");}
         else{board[destrow][destcol] = promotionpiece;
         break;}  
 }}
-    if(check(board, movesplayed)){
+    if(check(board, current.movesplayed)){
         printf("Illegal move it puts your king in check\n");
-        board[startrow][startcol] = startpiece;
-        board[destrow][destcol] = eatenpiece;
+        current=history[current.movesplayed];
         return;
     }
-    if((startcol+startrow)%2){
-        board[startrow][startcol] = '.';
-    }
-    else{
-        board[startrow][startcol] = '-';
-    }
+    board[startrow][startcol] = (startcol+startrow)%2 ? '.' : '-';
     if(eatenpiece != '-' && eatenpiece != '.'){eatenpieces(eatenpiece);}
+    current.enpassCol = -1;
+    if(startpiece == 'p' && (destrow - startrow) == -2) { current.enpassCol = startcol; }
+    if(startpiece == 'P' && (destrow - startrow) == 2) { current.enpassCol = startcol; }
+    current.movesplayed++;
+    undoCount = 0;
+    history[current.movesplayed] = current;
     printBoard(board);
-    movesplayed++;
+    
     }
     else{
         printf("Move is invalid, please enter another move\n");
@@ -162,6 +255,11 @@ input[j] = '\0';
 
 
 void printBoard(char board[8][8]){
+    /*#ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif*/
     printf("    A   B   C   D   E   F   G   H\n");
     printf("  +---+---+---+---+---+---+---+---+\n");
     for (int i=0;i<8;i++){
@@ -171,12 +269,12 @@ void printBoard(char board[8][8]){
         if(i == 1){
             printf(" %d ", 8-i); 
             printf("\t\tWhite taken out:"); 
-            for(int r=0;r<whiteeatencount;r++){if(r==whiteeatencount-1){printf("%s", piecechangeforprint(whiteeaten[r]));} else{printf("%s, ", piecechangeforprint(whiteeaten[r]));}}
+            for(int r=0;r<current.whiteeatencount;r++){if(r==current.whiteeatencount-1){printf("%s", piecechangeforprint(current.whiteeaten[r]));} else{printf("%s, ", piecechangeforprint(current.whiteeaten[r]));}}
             printf("\n  +---+---+---+---+---+---+---+---+\n");}
         else if(i == 2){
             printf(" %d", 8-i); 
             printf("\t\tBlack taken out:");  
-            for(int s=0;s<blackeatencount;s++){if(s==blackeatencount-1){printf("%s", piecechangeforprint(blackeaten[s]));} else{printf("%s, ", piecechangeforprint(blackeaten[s]));}}
+            for(int s=0;s<current.blackeatencount;s++){if(s==current.blackeatencount-1){printf("%s", piecechangeforprint(current.blackeaten[s]));} else{printf("%s, ", piecechangeforprint(current.blackeaten[s]));}}
             printf("\n  +---+---+---+---+---+---+---+---+\n");}
         else if(i == 0){printf(" %d", 8-i);
             printf("\t\t"); sidenote();
@@ -202,6 +300,8 @@ void initposition(char board[8][8]){
       board[i][j] = initialboard[i][j];
     }
 }
+
+
          }
 
 
@@ -246,14 +346,11 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
-    int whoseturn;
     char piece = board[startrow][startcol];
     int rowdiff = destrow - startrow;
     int coldiff = destcol - startcol;
-    if(skip == 0 && turn(movesplayed)==0){whoseturn = 0;}
-    else if(skip == 0 && turn(movesplayed)==1){whoseturn =1;}
-    if( skip == 0 && iswhite(piece) && turn(movesplayed)==1){return 0;}
-    else if(skip == 0 && isblack(piece) && turn(movesplayed)==0){return 0;}
+    if( skip == 0 && iswhite(piece) && turn(current.movesplayed)==1){return 0;}
+    else if(skip == 0 && isblack(piece) && turn(current.movesplayed)==0){return 0;}
     if(startrow == destrow && startcol == destcol){return 0;}
     if(iswhite(piece) && iswhite(board[destrow][destcol])){return 0;}
     if(isblack(piece) && isblack(board[destrow][destcol])){return 0;}
@@ -263,19 +360,21 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
      if(rowdiff == -1 && isempty(board[destrow][destcol])){return 1;}   
      if(rowdiff == -2 && startrow == 6 && isempty(board[destrow][destcol]) && isempty(board[destrow+1][destcol])){return 1;} 
      }
-     else if(abs(coldiff) == 1){
-         if(rowdiff == -1 && !isempty(board[destrow][destcol])){return 1;}
-     }
-     return 0;    
+        else if(abs(coldiff) == 1 && rowdiff == -1) {
+        if(!isempty(board[destrow][destcol])){return 1;}
+        if(destrow == 2 && destcol == current.enpassCol){return 1;}
+    }
+     return 0;
      case 'P':
      if(coldiff == 0){
      if(rowdiff == 1 && isempty(board[destrow][destcol])){return 1;}   
      if(rowdiff == 2 && startrow == 1 && isempty(board[destrow][destcol]) && isempty(board[destrow-1][destcol])){return 1;} 
      }
-     else if(abs(coldiff) == 1){
-         if(rowdiff == 1 && !isempty(board[destrow][destcol])){return 1;}
-     }
-     return 0;  
+        else if(abs(coldiff) == 1 && rowdiff == 1) {
+        if(!isempty(board[destrow][destcol])){return 1;}
+        if(destrow == 5 && destcol == current.enpassCol){return 1;}
+    }
+    return 0;
      case 'r':
      case 'R':
      if(ispathclear(board, destrow, destcol, startrow, startcol) && (rowdiff == 0 || coldiff == 0)){return 1;}
@@ -293,8 +392,55 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
      if((rowdiff == 0 || coldiff == 0 || abs(rowdiff) == abs(coldiff)) && ispathclear(board, destrow, destcol, startrow, startcol)){return 1;}
      return 0;
      case 'k':
+     if((abs(rowdiff) <= 1) && (abs(coldiff) <= 1)){return 1;}
+     if(startrow == 7 && rowdiff == 0 &&!current.Wkingmoved && skip==0){
+        if(destcol == 6 && ispathclear(board, 7, 7, 7, 4)&& !current.WrookmovedH) {
+            if(check(board,0))return 0;
+        board[7][5] = 'k';
+        board[7][4] = (7+4)%2 ? '.' : '-';
+        int f1check = check(board, 0);
+        board[7][4] = 'k';
+        board[7][5] = (7+5)%2 ? '.' : '-';
+        if (f1check) return 0;
+        return 1;
+
+        }
+        if(destcol == 2 && ispathclear(board, 7, 0, 7, 4) && !current.WrookmovedA) {
+            if(check(board,0))return 0;
+        board[7][3] = 'k';
+        board[7][4] = (7+4)%2 ? '.' : '-';
+        int d1check = check(board, 0);
+        board[7][4] = 'k';
+        board[7][3] = (7+5)%2 ? '.' : '-';
+        if (d1check) return 0;
+        return 1;
+        }
+     } 
+     return 0;
      case 'K':
      if((abs(rowdiff) <= 1) && (abs(coldiff) <= 1)){return 1;}
+     if(startrow == 0 && rowdiff == 0 &&!current.Bkingmoved && skip==0){
+        if(destcol == 6 && ispathclear(board, 0, 7, 0, 4)&& !current.BrookmovedH) {
+            if(check(board,1))return 0;
+            board[0][5] = 'K';
+            board[0][4] = (0+4)%2 ? '.' : '-';
+            int f8check = check(board, 1);
+            board[0][4] = 'K';
+            board[0][5] = (0+5)%2 ? '.' : '-';
+            if (f8check) return 0;
+            return 1;
+        }
+        if(destcol == 2 && ispathclear(board, 0, 0, 0, 4) && !current.BrookmovedA) {
+            if(check(board,1))return 0;
+            board[0][3] = 'K';
+            board[0][4] = (0+4)%2 ? '.' : '-';
+            int d8check = check(board, 1);
+            board[0][4] = 'K';
+            board[0][3] = (0+5)%2 ? '.' : '-';
+            if (d8check) return 0;
+            return 1;
+        }
+     } 
      return 0;
      default:
          return 0;
@@ -304,18 +450,18 @@ int isvalidmove(char board[8][8], char c1, int r1, char c2, int r2, int skip){
 
 void eatenpieces(int eatenpiece){
     if(iswhite(eatenpiece)){
-        whiteeaten[whiteeatencount] = eatenpiece;
-        whiteeatencount++;
+        current.whiteeaten[current.whiteeatencount] = eatenpiece;
+        current.whiteeatencount++;
     }
     else if(isblack(eatenpiece)){
-       blackeaten[blackeatencount] = eatenpiece;
-        blackeatencount++;
+       current.blackeaten[current.blackeatencount] = eatenpiece;
+        current.blackeatencount++;
     }
 }
 
 
 int check(char board[8][8], int movesplayed){
-  int Krow, Kcol;
+  int Krow = -1, Kcol = -1;
   char undercheck, King;
   if(turn(movesplayed)==0){
        King = 'k';}
@@ -345,7 +491,6 @@ int check(char board[8][8], int movesplayed){
 
 
 int ispromotion(char board[8][8], char c1, int r1, char c2, int r2){
-    int destcol = c2 - 'A';
     int destrow = 8 - r2;
     int startcol = c1 - 'A';
     int startrow = 8 - r1;
@@ -354,6 +499,7 @@ int ispromotion(char board[8][8], char c1, int r1, char c2, int r2){
     else if(piece == 'P' && isblack(piece) && destrow == 7){return 1;}
     return 0;
 }
+
 
 
 int ispromotionvalid(char board[8][8], char promotionpiece,int  startrow, int startcol){
@@ -368,11 +514,11 @@ int ispromotionvalid(char board[8][8], char promotionpiece,int  startrow, int st
 
 int checkmate(char board[8][8]){
     char temp;
-    if(!check(board, movesplayed)){return 0;}
+    if(!check(board, current.movesplayed)){return 0;}
     for(int i =0 ; i < 8; i++){
         for(int j = 0; j < 8; j++){
-        if(iswhite(board[i][j]) && turn(movesplayed) == 1){continue;}
-        else if(isblack(board[i][j]) && turn(movesplayed) == 0){continue;}
+        if(iswhite(board[i][j]) && turn(current.movesplayed) == 1){continue;}
+        else if(isblack(board[i][j]) && turn(current.movesplayed) == 0){continue;}
         else if(isempty(board[i][j])){continue;}
         for (int r = 0; r < 8; r++){
             for (int c = 0; c < 8; c++){
@@ -385,7 +531,7 @@ int checkmate(char board[8][8]){
     else{
         board[i][j] = '-';
     }
-    if(!check(board, movesplayed)){
+    if(!check(board, current.movesplayed)){
         board[i][j] = board[r][c];
         board[r][c] = temp;
         return 0;}
@@ -397,19 +543,19 @@ int checkmate(char board[8][8]){
 }
         }
     }
- if(turn(movesplayed) == 1){whitewin = 1;}
- else if(turn(movesplayed) == 0){blackwin = 1;}  
+ if(turn(current.movesplayed) == 1){current.whitewin = 1;}
+ else if(turn(current.movesplayed) == 0){current.blackwin = 1;}  
     return 1;
 }
 
 
 int stalemate(char board[8][8]){
     char temp;
-    if(check(board, movesplayed)){return 0;}
+    if(check(board, current.movesplayed)){return 0;}
     for(int i =0 ; i < 8; i++){
         for(int j = 0; j < 8; j++){
-      if(iswhite(board[i][j]) && turn(movesplayed) == 1){continue;}
-        else if(isblack(board[i][j]) && turn(movesplayed) == 0){continue;}
+      if(iswhite(board[i][j]) && turn(current.movesplayed) == 1){continue;}
+        else if(isblack(board[i][j]) && turn(current.movesplayed) == 0){continue;}
         else if(isempty(board[i][j])){continue;}
         for (int r = 0; r < 8; r++){
             for (int c = 0; c < 8; c++){
@@ -422,7 +568,7 @@ int stalemate(char board[8][8]){
     else{
              board[i][j] = '-';
     }
-    if(!check(board, movesplayed)){
+    if(!check(board, current.movesplayed)){
         board[i][j] = board[r][c];
         board[r][c] = temp;
         return 0;}
@@ -438,10 +584,10 @@ int stalemate(char board[8][8]){
 
 int endgame(char board[8][8]){
     if(checkmate(board)){
-        if(whitewin == 1){
+        if(current.whitewin == 1){
             printf("White won! Checkmate");
             return 1;}
-        else if(blackwin == 1){
+        else if(current.blackwin == 1){
             printf("Black won! Checkmate");
             return 1;}
         }
@@ -533,3 +679,14 @@ void sidenote(){
     break;
   }
 }
+
+void undo(){
+    if(current.movesplayed>0){
+        current=history[current.movesplayed-1];
+        printf("undone successfully\n\n");
+    }
+}
+    void redo(){
+        current=history[current.movesplayed+1];
+        printf("redone successfully\n\n");
+    }
