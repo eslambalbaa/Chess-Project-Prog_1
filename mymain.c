@@ -255,11 +255,6 @@ input[j] = '\0';
 
 
 void printBoard(char board[8][8]){
-    /*#ifdef _WIN32
-        system("cls");
-    #else
-        system("clear");
-    #endif*/
     printf("    A   B   C   D   E   F   G   H\n");
     printf("  +---+---+---+---+---+---+---+---+\n");
     for (int i=0;i<8;i++){
@@ -690,3 +685,4 @@ void undo(){
         current=history[current.movesplayed+1];
         printf("redone successfully\n\n");
     }
+
