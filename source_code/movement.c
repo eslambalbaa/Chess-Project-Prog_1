@@ -60,6 +60,9 @@ void movement(char board[8][8]){
         printBoard(current.board);
         return;
     }
+    if(strcmp(inputmove, "QUIT") == 0){
+        exit(0);
+    }
     if(strlen(inputmove) != 4){printf("Move is invalid, please enter another move\n"); return;}
     c1 = inputmove[0];
     c2 = inputmove[2];
@@ -185,6 +188,8 @@ void Save(){
         printf("save failed\n");
         else{
             fwrite(&current, sizeof(game), 1, save);
+            fwrite(history, sizeof(game), 1000, save);
+            fwrite(&undoCount, sizeof(int), 1, save);
             fclose(save);
             printf("saved successfully\n\n");
         }
@@ -195,6 +200,8 @@ void Load(){
         printf("load failed\n\n");
         else{
             fread(&current, sizeof(game), 1, load);
+            fread(history, sizeof(game), 1000, load);
+            fread(&undoCount, sizeof(int), 1, load);
             fclose(load);
             printf("loaded successfully\n\n");
         }
