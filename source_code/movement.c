@@ -62,6 +62,7 @@ void movement(char board[8][8]){
     }
     if(strcmp(inputmove, "QUIT") == 0){
         exit(0);
+        return;
     }
     if(strlen(inputmove) != 4){printf("Move is invalid, please enter another move\n"); return;}
     c1 = inputmove[0];
