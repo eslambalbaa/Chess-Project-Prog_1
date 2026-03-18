@@ -1,0 +1,10 @@
+void movement(char board[8][8]);
+int turn(int moves_played);
+int is_white_turn(int moves_played);
+int is_black_turn(int moves_played);
+void clean_input(char *input);
+void clear_input_buffer();
+void undo();
+void redo();
+void save_game();
+void load_game();
