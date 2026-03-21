@@ -27,9 +27,7 @@ int main()
     history[0] = current;
     print_board(current.board);
     while (!endgame(current.board))
-    {
         movement(current.board);
-    }
 
     return 0;
 }
