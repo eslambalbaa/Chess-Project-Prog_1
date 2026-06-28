@@ -1,11 +1,9 @@
 #include "variables.h"
 #include "side_notes.h"
-#include <stdio.h>
 #include <stdlib.h>
 
-void sidenote()
-{
-  const char *notes[] = {
+const char* get_random_sidenote() {
+    const char *notes[] = {
       "2 is forever lonely in the prime world!",
       "Error 404: Motivation Not Found",
       "One man's constant is another man's variable",
@@ -32,7 +30,6 @@ void sidenote()
       "Code never lies, comments sometimes do",
       "Git: In case of fire, commit and push",
       "I need a nap, not a solution"};
-  int num_quotes = sizeof(notes) / sizeof(notes[0]);
-  int quote = rand() % num_quotes;
-  printf("%s", notes[quote]);
+    int num_quotes = sizeof(notes) / sizeof(notes[0]);
+    return notes[rand() % num_quotes];
 }

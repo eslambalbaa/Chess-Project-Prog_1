@@ -48,150 +48,69 @@ static void update_castle_flags(char start_piece, int start_row, int start_col, 
     }
 }
 
-void movement(char board[8][8])
-{
-    if (check(board, current.moves_played))
-        printf("Check!\n");
-
-    printf(is_white_turn(current.moves_played) ? "White's move:" : "Black's move:");
-
-    fgets(input_move, 80, stdin);
-    if (strchr(input_move, '\n') == NULL)
-        clear_input_buffer();
-    clean_input(input_move);
-
-    if (strcmp(input_move, "UNDO") == 0)
-    {
-        undo();
-        return;
-    }
-
-    if (strcmp(input_move, "REDO") == 0)
-    {
-        redo();
-        return;
-    }
-    if (strcmp(input_move, "SAVE") == 0)
-    {
-        save_game();
-        return;
-    }
-    if (strcmp(input_move, "LOAD") == 0)
-    {
-        load_game();
-        return;
-    }
-    if (strcmp(input_move, "QUIT") == 0)
-        exit(0);
-
-    if (strlen(input_move) != 4)
-    {
-        printf("Move is invalid, please enter another move\n");
-        return;
-    }
-
-    char c1 = input_move[0], c2 = input_move[2];
-    int r1 = input_move[1] - '0', r2 = input_move[3] - '0';
-
-    if (!is_valid_move(board, c1, r1, c2, r2, 0))
-    {
-        printf("Move is invalid, please enter another move\n");
-        return;
-    }
+// Place this in movement.c
+int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2, char prom_piece) {
+    if (!is_valid_move(board, c1, r1, c2, r2, 0)) return 0;
 
     int dest_col = c2 - 'A';
     int dest_row = 8 - r2;
     int start_col = c1 - 'A';
     int start_row = 8 - r1;
-    int eaten_piece_val = board[dest_row][dest_col];
     char start_piece = board[start_row][start_col];
+    int eaten_piece_val = board[dest_row][dest_col];
     int is_en_passant = 0;
     int en_passant_row = -1;
 
-    if ((start_piece == 'p' || start_piece == 'P') && start_col != dest_col && isempty(eaten_piece_val))
-    {
+    // 1. En Passant Detection
+    if ((start_piece == 'p' || start_piece == 'P') && start_col != dest_col && isempty(eaten_piece_val)) {
         is_en_passant = 1;
         en_passant_row = start_row;
         eaten_piece_val = board[en_passant_row][dest_col];
     }
 
+    // 2. Save State Before Move
     history[current.moves_played] = current;
+    undoCount = 0;
+
+    // 3. Execute Move
     board[dest_row][dest_col] = start_piece;
     board[start_row][start_col] = (start_row + start_col) % 2 ? '.' : '-';
+    if (is_en_passant) board[en_passant_row][dest_col] = (en_passant_row + dest_col) % 2 ? '.' : '-';
 
-    if (is_en_passant)
-        board[en_passant_row][dest_col] = (en_passant_row + dest_col) % 2 ? '.' : '-';
-
-    if ((start_piece == 'k' || start_piece == 'K') && abs(start_col - dest_col) == 2)
-    {
+    // 4. Execute Castling Teleport
+    if ((start_piece == 'k' || start_piece == 'K') && abs(start_col - dest_col) == 2) {
         int rook_start_col = (dest_col == 6) ? 7 : 0;
         int rook_dest_col = (dest_col == 6) ? 5 : 3;
         board[start_row][rook_dest_col] = board[start_row][rook_start_col];
         board[start_row][rook_start_col] = (start_row + rook_dest_col) % 2 ? '.' : '-';
     }
 
+    // 5. Update Flags & Captured Pieces
     update_castle_flags(start_piece, start_row, start_col, dest_col);
+    if (!isempty(eaten_piece_val)) eatenpieces(eaten_piece_val);
 
-    if (is_promotion(board, c1, r1, c2, r2))
-    {
-        while (1)
-        {
-            printf("Promotion What would you like to upgrade to?\nbishop(B or b), knight(N or n), queen(Q or q), rook(R or r):");
-            char input_prom[10];
-            fgets(input_prom, 10, stdin);
-            if (strchr(input_prom, '\n') == NULL)
-                clear_input_buffer();
-            clean_input(input_prom);
-
-            promotion_piece = input_prom[0];
-            promotion_piece = (turn(current.moves_played) == 0) ? tolower(promotion_piece) : toupper(promotion_piece);
-
-            if (!is_promotion_valid(board, promotion_piece, dest_row, dest_col) || (strlen(input_prom) != 1))
-                printf("Promotion invalid please enter another one\n");
-            else
-            {
-                board[dest_row][dest_col] = promotion_piece;
-                break;
-            }
+    // 6. Promotion (Auto-Queen for GUI simplicity initially)
+    if (is_promotion(board, c1, r1, c2, r2)) {
+            // Fallback to 'q' just in case, but otherwise use the player's choice
+            char p = (prom_piece != '\0') ? prom_piece : 'q';
+            board[dest_row][dest_col] = (turn(current.moves_played) == 0) ? tolower(p) : toupper(p);
         }
-    }
 
-    if (check(board, current.moves_played))
-    {
-        printf("Illegal move it puts your king in check\n");
+    // 7. Revert if move causes self-check
+    if (check(board, current.moves_played)) {
         current = history[current.moves_played];
-        return;
+        return 0;
     }
 
-    if (!isempty(eaten_piece_val))
-        eatenpieces(eaten_piece_val);
-
+    // 8. Finalize En Passant State
     current.en_pass_col = -1;
-    if (start_piece == 'p' && (dest_row - start_row) == -2)
-        current.en_pass_col = start_col;
-    if (start_piece == 'P' && (dest_row - start_row) == 2)
-        current.en_pass_col = start_col;
+    if (start_piece == 'p' && (dest_row - start_row) == -2) current.en_pass_col = start_col;
+    if (start_piece == 'P' && (dest_row - start_row) == 2) current.en_pass_col = start_col;
 
     current.moves_played++;
-    undoCount = 0;
-    history[current.moves_played] = current;
-    print_board(board);
-}
+    history[current.moves_played] = current; // Save post-move state for REDO
 
-void clear_input_buffer()
-{
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF)
-        ;
-}
-
-void clean_input(char *input)
-{
-    int j = 0;
-    for (int i = 0; input[i] != '\0'; i++)
-        if (input[i] != ' ' && input[i] != '\n' && input[i] != '\r')
-            input[j++] = toupper(input[i]);
-    input[j] = '\0';
+    return 1; // Move successful
 }
 
 int turn(int moves_played)
@@ -204,7 +123,6 @@ void undo()
     if (current.moves_played > 0)
     {
         current = history[current.moves_played - 1];
-        print_board(current.board);
         undoCount++;
         printf("undone successfully\n\n");
     }
@@ -216,7 +134,6 @@ void redo()
     if (undoCount > 0)
     {
         current = history[current.moves_played + 1];
-        print_board(current.board);
         undoCount--;
         printf("redone successfully\n\n");
     }
@@ -250,6 +167,5 @@ void load_game()
         fread(&undoCount, sizeof(int), 1, load);
         fclose(load);
         printf("loaded successfully\n\n");
-        print_board(current.board);
     }
 }

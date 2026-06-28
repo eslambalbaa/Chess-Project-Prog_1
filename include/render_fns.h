@@ -1,5 +1,15 @@
+#ifndef RENDER_FNS_H
+#define RENDER_FNS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void initposition(char board[8][8]);
-void print_board(char board[8][8]);
-char *piecechangeforprint(char piece);
 void eatenpieces(int eaten_piece);
-void clear_screen();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // RENDER_FNS_H

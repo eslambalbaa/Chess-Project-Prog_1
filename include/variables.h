@@ -1,11 +1,17 @@
+#ifndef VARIABLES_H
+#define VARIABLES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char Wpawn, Wrook, Wknight, Wbishop, Wqueen, Wking;
 extern char Bpawn, Brook, Bknight, Bbishop, Bqueen, Bking;
 extern char input_move[100];
 extern char eaten_piece;
 extern char promotion_piece;
 extern int undoCount;
-typedef struct
-{
+typedef struct {
   char board[8][8];
   int moves_played;
   int white_eaten_count;
@@ -24,3 +30,9 @@ typedef struct
 } game;
 extern game history[1000];
 extern game current;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // VARIABLES_H
