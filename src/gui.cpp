@@ -257,7 +257,6 @@ static void render_frame() {
     SDL_RenderFillRect(renderer, &dim_overlay);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
-    // Draw the Popup Box
     int box_x = 200, box_y = 350, box_w = 400, box_h = 100;
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
     SDL_Rect menu_rect = {box_x, box_y, box_w, box_h};
