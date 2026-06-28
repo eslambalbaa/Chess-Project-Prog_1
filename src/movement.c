@@ -48,10 +48,8 @@ static void update_castle_flags(char start_piece, int start_row, int start_col, 
     }
 }
 
-// Place this in movement.c
 int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2, char prom_piece) {
     if (!is_valid_move(board, c1, r1, c2, r2, 0)) return 0;
-
     int dest_col = c2 - 'A';
     int dest_row = 8 - r2;
     int start_col = c1 - 'A';
@@ -60,57 +58,46 @@ int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2, char prom
     int eaten_piece_val = board[dest_row][dest_col];
     int is_en_passant = 0;
     int en_passant_row = -1;
-
-    // 1. En Passant Detection
+    
     if ((start_piece == 'p' || start_piece == 'P') && start_col != dest_col && isempty(eaten_piece_val)) {
         is_en_passant = 1;
         en_passant_row = start_row;
         eaten_piece_val = board[en_passant_row][dest_col];
     }
-
-    // 2. Save State Before Move
+    
     history[current.moves_played] = current;
     undoCount = 0;
-
-    // 3. Execute Move
+    
     board[dest_row][dest_col] = start_piece;
     board[start_row][start_col] = (start_row + start_col) % 2 ? '.' : '-';
     if (is_en_passant) board[en_passant_row][dest_col] = (en_passant_row + dest_col) % 2 ? '.' : '-';
-
-    // 4. Execute Castling Teleport
+    
     if ((start_piece == 'k' || start_piece == 'K') && abs(start_col - dest_col) == 2) {
         int rook_start_col = (dest_col == 6) ? 7 : 0;
         int rook_dest_col = (dest_col == 6) ? 5 : 3;
         board[start_row][rook_dest_col] = board[start_row][rook_start_col];
         board[start_row][rook_start_col] = (start_row + rook_dest_col) % 2 ? '.' : '-';
     }
-
-    // 5. Update Flags & Captured Pieces
+    
     update_castle_flags(start_piece, start_row, start_col, dest_col);
     if (!isempty(eaten_piece_val)) eatenpieces(eaten_piece_val);
-
-    // 6. Promotion (Auto-Queen for GUI simplicity initially)
+    
     if (is_promotion(board, c1, r1, c2, r2)) {
-            // Fallback to 'q' just in case, but otherwise use the player's choice
             char p = (prom_piece != '\0') ? prom_piece : 'q';
             board[dest_row][dest_col] = (turn(current.moves_played) == 0) ? tolower(p) : toupper(p);
         }
-
-    // 7. Revert if move causes self-check
+    
     if (check(board, current.moves_played)) {
         current = history[current.moves_played];
         return 0;
     }
-
-    // 8. Finalize En Passant State
+    
     current.en_pass_col = -1;
     if (start_piece == 'p' && (dest_row - start_row) == -2) current.en_pass_col = start_col;
     if (start_piece == 'P' && (dest_row - start_row) == 2) current.en_pass_col = start_col;
-
     current.moves_played++;
-    history[current.moves_played] = current; // Save post-move state for REDO
-
-    return 1; // Move successful
+    history[current.moves_played] = current;
+    return 1;
 }
 
 int turn(int moves_played)

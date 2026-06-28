@@ -41,12 +41,10 @@ static int selected_col = -1;
 static std::unordered_map<char, SDL_Texture *> piece_textures;
 static const char *active_sidenote = nullptr;
 
-// ADD THESE NEW GLOBALS:
 static bool is_promoting = false;
 static char pending_c1, pending_c2;
 static int pending_r1, pending_r2;
 
-// ADD THIS HELPER FUNCTION to keep our click logic clean
 static void execute_move_and_evaluate(char c1, int r1, char c2, int r2,
                                       char prom_piece) {
   if (apply_gui_move(current.board, c1, r1, c2, r2, prom_piece)) {
@@ -82,26 +80,21 @@ static void load_textures() {
 
 static void handle_click(int x, int y) {
   if (x < BOARD_SIZE) {
-    // A. GAME OVER LOCK
     if (current.white_win || current.black_win || stalemate(current.board))
       return;
-
-    // B. PROMOTION MENU LOCK
     if (is_promoting) {
       int box_x = 200, box_y = 350, box_w = 400, box_h = 100;
-      // If click is inside the popup menu
       if (x >= box_x && x <= box_x + box_w && y >= box_y &&
           y <= box_y + box_h) {
         char choices[] = {'q', 'r', 'b', 'n'};
-        int idx =
-            (x - box_x) / 100; // Calculate which of the 4 buttons was clicked
+        int idx = (x - box_x) / 100;
         execute_move_and_evaluate(pending_c1, pending_r1, pending_c2,
                                   pending_r2, choices[idx]);
         is_promoting = false;
         selected_row = -1;
         selected_col = -1;
       }
-      return; // Ignore all other board clicks until they pick a piece!
+      return;
     }
 
     int clicked_col = x / GRID_SIZE;
@@ -113,7 +106,7 @@ static void handle_click(int x, int y) {
         selected_row = clicked_row;
         selected_col = clicked_col;
       }
-    } // C. Piece is already selected -> Attempt to move it
+    }
     else {
       char c1 = selected_col + 'A';
       int r1 = 8 - selected_row;
@@ -121,10 +114,8 @@ static void handle_click(int x, int y) {
       int r2 = 8 - clicked_row;
 
       if (is_valid_move(current.board, c1, r1, c2, r2, 0)) {
-
-        // PREDICT PROMOTION: Look at the piece BEFORE it moves
         char moving_piece = current.board[selected_row][selected_col];
-        int target_row = 8 - r2; // Which is the same as clicked_row
+        int target_row = 8 - r2;
 
         bool will_promote = (moving_piece == 'p' && target_row == 0) ||
                             (moving_piece == 'P' && target_row == 7);
@@ -135,9 +126,8 @@ static void handle_click(int x, int y) {
           pending_r1 = r1;
           pending_c2 = c2;
           pending_r2 = r2;
-          return; // Freeze and wait for the menu click
+          return;
         } else {
-          // Normal move
           execute_move_and_evaluate(c1, r1, c2, r2, '\0');
         }
       }
@@ -146,11 +136,9 @@ static void handle_click(int x, int y) {
       selected_col = -1;
     }
   } else {
-    // Sidebar Clicks
     for (auto &btn : sidebar_buttons) {
       if (x >= btn.rect.x && x < btn.rect.x + btn.rect.w && y >= btn.rect.y &&
           y < btn.rect.y + btn.rect.h) {
-        // If we click UNDO/REDO while a promotion menu is open, cancel the menu
         if (is_promoting) {
           is_promoting = false;
           selected_row = -1;
@@ -173,34 +161,28 @@ static void render_frame() {
   SDL_SetRenderDrawColor(renderer, 128, 120, 117, 255);
   SDL_RenderClear(renderer);
 
-  // 1. Render Board
   for (int r = 0; r < 8; r++) {
     for (int c = 0; c < 8; c++) {
       SDL_Rect rect = {c * GRID_SIZE, r * GRID_SIZE, GRID_SIZE, GRID_SIZE};
 
-      // A. Draw Base Tile
       if ((r + c) % 2 == 0)
         SDL_SetRenderDrawColor(renderer, 240, 217, 181, 255);
       else
         SDL_SetRenderDrawColor(renderer, 100, 150, 200, 255);
       SDL_RenderFillRect(renderer, &rect);
 
-      // B. Highlight the currently selected piece
       if (r == selected_row && c == selected_col) {
-        SDL_SetRenderDrawColor(renderer, 100, 200, 100, 255); // Solid Green
+        SDL_SetRenderDrawColor(renderer, 100, 200, 100, 255);
         SDL_RenderFillRect(renderer, &rect);
       }
 
-      // C. Calculate and draw valid move indicators
       if (selected_row != -1) {
         char c1 = selected_col + 'A';
         int r1 = 8 - selected_row;
         char c2 = c + 'A';
         int r2 = 8 - r;
 
-        // If the backend says this tile is a valid move...
         if (is_valid_move(current.board, c1, r1, c2, r2, 0)) {
-          // Draw a small 30x30 square in the center of the tile
           SDL_SetRenderDrawColor(renderer, 100, 200, 100, 200);
           SDL_Rect dot_rect = {c * GRID_SIZE + (GRID_SIZE / 2) - 15,
                                r * GRID_SIZE + (GRID_SIZE / 2) - 15, 30, 30};
@@ -208,14 +190,12 @@ static void render_frame() {
         }
       }
 
-      // D. Draw the piece texture on top of everything
       char piece = current.board[r][c];
       if (piece_textures.count(piece))
         SDL_RenderCopy(renderer, piece_textures[piece], NULL, &rect);
     }
   }
 
-  // 2. Render Buttons
   for (const auto &btn : sidebar_buttons) {
     SDL_SetRenderDrawColor(renderer, 70, 70, 70, 255);
     SDL_RenderFillRect(renderer, &btn.rect);
@@ -235,7 +215,6 @@ static void render_frame() {
     }
   }
 
-  // 3. Render Active Sidenote
   if (active_sidenote && global_font) {
     SDL_Color white = {255, 255, 255, 255};
     SDL_Surface *surf = TTF_RenderText_Blended_Wrapped(
@@ -251,8 +230,6 @@ static void render_frame() {
     }
   }
 
-  // 4. Render Captured Pieces using the C Struct arrays
-  // Draw White Pieces (Y starts at 480)
   for (int i = 0; i < current.white_eaten_count; i++) {
     char piece = current.white_eaten[i];
     if (piece_textures.count(piece)) {
@@ -263,7 +240,6 @@ static void render_frame() {
     }
   }
 
-  // Draw Black Pieces (Y starts at 600 to separate from white)
   for (int i = 0; i < current.black_eaten_count; i++) {
     char piece = current.black_eaten[i];
     if (piece_textures.count(piece)) {
@@ -274,9 +250,7 @@ static void render_frame() {
     }
   }
 
-  // 5. Render Promotion Menu Overlay
   if (is_promoting) {
-    // Draw a dark transparent dimming overlay over the board
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
     SDL_Rect dim_overlay = {0, 0, BOARD_SIZE, BOARD_SIZE};
@@ -291,7 +265,6 @@ static void render_frame() {
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
     SDL_RenderDrawRect(renderer, &menu_rect);
 
-    // Draw the 4 Piece Options (Q, R, B, N)
     char pieces[] = {'q', 'r', 'b', 'n'};
     bool is_white = (turn(current.moves_played) == 0);
 
@@ -299,7 +272,6 @@ static void render_frame() {
       char p = is_white ? tolower(pieces[i]) : toupper(pieces[i]);
       SDL_Rect dest = {box_x + 10 + (i * 100), box_y + 10, 80, 80};
 
-      // Draw subtle dividers between buttons
       if (i > 0) {
         SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
         SDL_RenderDrawLine(renderer, box_x + (i * 100), box_y + 10,
